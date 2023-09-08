@@ -12,6 +12,7 @@ contract DonorSynk is ERC20{
 
     struct Hospital{
         address owner;
+        string hospitalName;
         string  uri;
         mapping(uint256 => Donors) donorsData;
         uint256[] allDonorsId;
@@ -148,6 +149,20 @@ function deductTokenForCheckUp(uint256 tokenToDeduct,address _checkUp) public{
     _burn(_checkUp, tokenToDeduct);
     _mint(msg.sender, tokenToDeduct);
 
+}
+
+function checkAvailableBlood() public view returns(string[] memory , BloodType[] memory) {
+    string[] memory _allHospitalName = AllHospital;
+    string[] memory _uri = new string[](_allHospitalName.length);
+    BloodType[] memory allAvailableBlood = new BloodType[](_allHospitalName.length);
+
+    for(uint i = 0; i < _allHospitalName.length; i++) {
+        Hospital storage fetchHospital = showHospital[_allHospitalName[i]];
+        _uri[i] = fetchHospital.uri;
+        allAvailableBlood[i] = fetchHospital.bloodtypes;
+    }
+
+    return (_uri, allAvailableBlood);
 }
 
 }
