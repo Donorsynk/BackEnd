@@ -6,11 +6,11 @@ pragma solidity ^0.8.17;
 contract DonorSynk{
 
     struct Hospital{
+        address owner;
         string  uri;
         mapping(uint256 => Donors) donorsData;
         uint256[] allDonorsId;
         uint256 ID;
-
     }
 
 
@@ -55,16 +55,25 @@ contract DonorSynk{
         require(nameExit[_hospitalName] == false, 'NAME_ALREADY_EXIST');
         require(registeredHospitalStatus[msg.sender] == false, 'ADDRRESS_REGISTERED');
         registeredHospitalStatus[_admin] = true;
-        nameExit[_generatedURI] =true;
+        nameExit[_hospitalName] =true;
         Hospital storage newHospital = hospitalAdmin[_admin];
         Hospital storage stringHospital = showHospital[_hospitalName];
         newHospital.uri = _generatedURI;
+        newHospital.owner = msg.sender;
+        stringHospital.uri = _generatedURI;
+        stringHospital.owner= msg.sender;
+
+
+        AllHospital.push(_hospitalName);
         
     }
 
-    function bookDonorAppointment(string memory _hospitalName, uint _id, bytes32 _governmentId, string memory _donorURI) public{
+    function bookDonorAppointment(string memory _hospitalName,  string memory _governmentId, string memory _donorURI) public{
         Hospital storage stringHospital = showHospital[_hospitalName];
-        Donors memory newDonor = Donors(_governmentId,_donorURI, false);
+        bytes memory GId = bytes(_governmentId);
+        bytes32 _GId = bytes32(GId);
+        Donors memory newDonor = Donors(_GId,_donorURI, false);
+        uint _id = stringHospital.ID;
         showHospital[_hospitalName].donorsData[_id] = newDonor;
         showHospital[_hospitalName].allDonorsId.push(_id);
         uint dataId = showHospital[_hospitalName].ID;
@@ -76,8 +85,35 @@ contract DonorSynk{
         return AllHospital;
     }
 
-    function showMyHospital() public returns(string memory uri, Donors memory, uint256[] memory _allDonorsId){
-
+    function showMyHospital(address _admin) public view returns(string memory uri){
+        uri = hospitalAdmin[_admin].uri;
     }
+
+   
+
+    function showAllDonors(string memory _name) public view returns (Donors[] memory) {
+    Hospital storage fetchDonor = showHospital[_name];
+    uint256[] storage DonorsId = fetchDonor.allDonorsId;
+
+    Donors[] memory result = new Donors[](DonorsId.length);
+    
+    for (uint256 i = 0; i < DonorsId.length; i++) {
+        result[i] = fetchDonor.donorsData[DonorsId[i]];
+    }  
+
+    return result;
+}
+
+function confirmBloodDonation(string memory _name, uint _id) public{
+    Hospital storage fetchDonor = showHospital[_name];
+    require(fetchDonor.owner == msg.sender, 'NOT_OWNER');
+    fetchDonor.donorsData[_id].Status = true;
+    // mint token
+
+}
+
+// function showPendingOffer(string memory _name) public view returns(Donors[] memory){
+//     Hospital storage 
+// }
 
 }
