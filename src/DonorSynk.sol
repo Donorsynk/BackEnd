@@ -1,9 +1,14 @@
 // SPDX-License-Identifier:MIT
 
 pragma solidity ^0.8.17;
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 
-contract DonorSynk{
+contract DonorSynk is ERC20{
+
+    constructor(string memory name, string memory symbol)ERC20( name, symbol){
+
+    }
 
     struct Hospital{
         address owner;
@@ -11,6 +16,7 @@ contract DonorSynk{
         mapping(uint256 => Donors) donorsData;
         uint256[] allDonorsId;
         uint256 ID;
+        BloodType bloodtypes;
     }
 
 
@@ -18,6 +24,18 @@ contract DonorSynk{
        bytes32 GovernmentId;
        string DonorURI;
        bool Status;
+    }
+
+    struct BloodType{
+        uint256 volumeAplus;
+        uint256 volumeANegative;
+        uint256 volumeBPlus;
+        uint256 volumeBNegative;
+        uint256 volumeABPlus;
+        uint256 volumeABNegative;
+        uint256 volumeOPlus;
+        uint256 volumeONegative;
+
     }
 
     // to show the status of the hospital
@@ -40,6 +58,9 @@ contract DonorSynk{
         NOT_OWNER
     }
 
+// enum CheckUp{
+
+// }
 
 
     // EVENT
@@ -104,16 +125,29 @@ contract DonorSynk{
     return result;
 }
 
-function confirmBloodDonation(string memory _name, uint _id) public{
+function confirmBloodDonation(string memory _name, uint _id, uint8 _bloodType, uint256 newVolume, address _donor) public{
     Hospital storage fetchDonor = showHospital[_name];
     require(fetchDonor.owner == msg.sender, 'NOT_OWNER');
     fetchDonor.donorsData[_id].Status = true;
-    // mint token
+    if(_bloodType == 0) fetchDonor.bloodtypes.volumeAplus += newVolume;
+    else if(_bloodType == 1) fetchDonor.bloodtypes.volumeANegative += newVolume;
+    else if(_bloodType == 2) fetchDonor.bloodtypes.volumeBPlus += newVolume;
+    else if(_bloodType == 3) fetchDonor.bloodtypes.volumeBNegative += newVolume;
+    else if(_bloodType == 4) fetchDonor.bloodtypes.volumeABPlus += newVolume;
+    else if(_bloodType == 5) fetchDonor.bloodtypes.volumeABNegative += newVolume;
+    else if(_bloodType == 6) fetchDonor.bloodtypes.volumeOPlus += newVolume;
+    else fetchDonor.bloodtypes.volumeONegative += newVolume;
+    _mint(_donor, 10*1e18);
 
 }
 
-// function showPendingOffer(string memory _name) public view returns(Donors[] memory){
-//     Hospital storage 
-// }
+function deductTokenForCheckUp(uint256 tokenToDeduct,address _checkUp) public{
+
+    // donorsBalance[_checkUp] -=tokenToDeduct;
+    require(registeredHospitalStatus[msg.sender], 'HOSPITAL_NOT_REGISTERED');
+    _burn(_checkUp, tokenToDeduct);
+    _mint(msg.sender, tokenToDeduct);
+
+}
 
 }
