@@ -25,6 +25,9 @@ contract DonorSynk is ERC20{
        bytes32 GovernmentId;
        string DonorURI;
        bool Status;
+       string myBloodType;
+       address donor;
+       uint256 donationDate;
     }
 
     struct BloodType{
@@ -40,7 +43,7 @@ contract DonorSynk is ERC20{
     }
 
     // to show the status of the hospital
-    mapping(address => bool) registeredHospitalStatus;
+    mapping(address => bool) public registeredHospitalStatus;
 
     mapping(address => Hospital) hospitalAdmin;
 
@@ -53,15 +56,12 @@ contract DonorSynk is ERC20{
 // incentives of Donors
     mapping(address => uint256) donorsBalance;
 
-    enum Error{
-        NAME_ALREADY_EXIST,
-        ADDRRESS_REGISTERED,
-        NOT_OWNER
-    }
+    // enum Error{
+    //     NAME_ALREADY_EXIST,
+    //     ADDRRESS_REGISTERED,
+    //     NOT_OWNER
+    // }
 
-// enum CheckUp{
-
-// }
 
 
     // EVENT
@@ -85,16 +85,16 @@ contract DonorSynk is ERC20{
         stringHospital.uri = _generatedURI;
         stringHospital.owner= msg.sender;
 
-
         AllHospital.push(_hospitalName);
         
     }
 
+// 
     function bookDonorAppointment(string memory _hospitalName,  string memory _governmentId, string memory _donorURI) public{
         Hospital storage stringHospital = showHospital[_hospitalName];
         bytes memory GId = bytes(_governmentId);
         bytes32 _GId = bytes32(GId);
-        Donors memory newDonor = Donors(_GId,_donorURI, false);
+        Donors memory newDonor = Donors(_GId,_donorURI, false," Nill", msg.sender, 0);
         uint _id = stringHospital.ID;
         showHospital[_hospitalName].donorsData[_id] = newDonor;
         showHospital[_hospitalName].allDonorsId.push(_id);
@@ -107,13 +107,18 @@ contract DonorSynk is ERC20{
         return AllHospital;
     }
 
-    function showMyHospital(address _admin) public view returns(string memory uri){
+    function showMyHospital(address _admin) public view returns(string memory uri, string memory _hospitalName){
         uri = hospitalAdmin[_admin].uri;
+        _hospitalName = hospitalAdmin[_admin].uri;
+    }
+    
+    function fetchHospitalURI(string memory _hospitalName) public view returns(string memory uri){
+        uri = showHospital[_hospitalName].uri;
     }
 
    
 
-    function showAllDonors(string memory _name) public view returns (Donors[] memory) {
+function showAllDonors(string memory _name) public view returns (Donors[] memory) {
     Hospital storage fetchDonor = showHospital[_name];
     uint256[] storage DonorsId = fetchDonor.allDonorsId;
 
@@ -130,14 +135,31 @@ function confirmBloodDonation(string memory _name, uint _id, uint8 _bloodType, u
     Hospital storage fetchDonor = showHospital[_name];
     require(fetchDonor.owner == msg.sender, 'NOT_OWNER');
     fetchDonor.donorsData[_id].Status = true;
-    if(_bloodType == 0) fetchDonor.bloodtypes.volumeAplus += newVolume;
-    else if(_bloodType == 1) fetchDonor.bloodtypes.volumeANegative += newVolume;
-    else if(_bloodType == 2) fetchDonor.bloodtypes.volumeBPlus += newVolume;
-    else if(_bloodType == 3) fetchDonor.bloodtypes.volumeBNegative += newVolume;
-    else if(_bloodType == 4) fetchDonor.bloodtypes.volumeABPlus += newVolume;
-    else if(_bloodType == 5) fetchDonor.bloodtypes.volumeABNegative += newVolume;
-    else if(_bloodType == 6) fetchDonor.bloodtypes.volumeOPlus += newVolume;
-    else fetchDonor.bloodtypes.volumeONegative += newVolume;
+    fetchDonor.donorsData[_id].donationDate = block.timestamp;
+
+    if(_bloodType == 0) {
+        fetchDonor.bloodtypes.volumeAplus += newVolume;
+        fetchDonor.donorsData[_id].myBloodType ="A+" ;
+        }
+    else if(_bloodType == 1){ fetchDonor.bloodtypes.volumeANegative += newVolume;
+     fetchDonor.donorsData[_id].myBloodType ="A-" ;}
+    else if(_bloodType == 2){ fetchDonor.bloodtypes.volumeBPlus += newVolume;
+     fetchDonor.donorsData[_id].myBloodType ="B+" ;
+    }
+    else if(_bloodType == 3) {fetchDonor.bloodtypes.volumeBNegative += newVolume;
+     fetchDonor.donorsData[_id].myBloodType ="B-" ;
+    }
+    else if(_bloodType == 4) {fetchDonor.bloodtypes.volumeABPlus += newVolume;
+     fetchDonor.donorsData[_id].myBloodType ="AB+" ;
+}    else if(_bloodType == 5) {fetchDonor.bloodtypes.volumeABNegative += newVolume;
+ fetchDonor.donorsData[_id].myBloodType ="AB-" ;
+}
+    else if(_bloodType == 6) {fetchDonor.bloodtypes.volumeOPlus += newVolume;
+     fetchDonor.donorsData[_id].myBloodType ="O+" ;
+    }
+    else {fetchDonor.bloodtypes.volumeONegative += newVolume;
+     fetchDonor.donorsData[_id].myBloodType ="O-" ;
+    }
     _mint(_donor, 10*1e18);
 
 }
@@ -163,6 +185,19 @@ function checkAvailableBlood() public view returns(string[] memory , BloodType[]
     }
 
     return (_uri, allAvailableBlood);
+}
+
+function transferFrom(address from, address to, uint256 amount) public override returns(bool){
+    revert("TOKEN_CAN_NOT_BE_TRANSFERRED");
+}
+
+function transfer(address to, uint256 amount) public override returns (bool) {
+    revert("TOKEN_CAN_NOT_BE_TRANSFERRED");
+
+}
+function fetchStatus(address _admin) public view returns(bool){
+    bool status = registeredHospitalStatus[_admin];
+    return status;
 }
 
 }
